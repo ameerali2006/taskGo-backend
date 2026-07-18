@@ -6,7 +6,7 @@ const jwt_auth_service_1 = require("../service/jwt-auth.service");
 const User_repository_1 = require("../repositories/User.repository");
 const authMiddleware = async (req, res, next) => {
     try {
-        const token = req.cookies?.token;
+        const token = req.cookies?.accessToken;
         if (!token) {
             res.status(401).json({
                 success: false,
@@ -19,7 +19,7 @@ const authMiddleware = async (req, res, next) => {
         if (!decoded || !decoded._id) {
             res.status(401).json({
                 success: false,
-                message: "Token is invalid or expired",
+                message: "Token expired",
             });
             return;
         }

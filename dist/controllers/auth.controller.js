@@ -15,15 +15,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const tsyringe_1 = require("tsyringe");
 const auth_service_1 = require("../service/auth.service");
+const jwt_auth_service_1 = require("../service/jwt-auth.service");
 let AuthController = class AuthController {
     authService;
-    constructor(authService) {
+    jwtService;
+    constructor(authService, jwtService) {
         this.authService = authService;
+        this.jwtService = jwtService;
     }
     signUp = async (req, res, next) => {
         try {
             const { name, email, phone, password } = req.body;
-            // Backend validations (never trust frontend validation)
+            // Validate inputs
             if (!name || typeof name !== "string" || name.trim().length < 3 || name.trim().length > 50) {
                 res.status(400).json({
                     success: false,
@@ -47,18 +50,17 @@ let AuthController = class AuthController {
                 });
                 return;
             }
-            // Password rule: min 8 characters, one uppercase, one lowercase, one number, one special character
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
             if (!password || typeof password !== "string" || !passwordRegex.test(password)) {
                 res.status(400).json({
                     success: false,
-                    message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+                    message: "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters",
                 });
                 return;
             }
-            const result = await this.authService.register({ name, email, phone, password });
+            const result = await this.authService.signup({ name, email, phone, password });
             if (!result.success) {
-                if (result.message === "User already exists" || result.message === "Phone number already exists") {
+                if (result.message === "Email already registered" || result.message === "Phone number already registered") {
                     res.status(409).json({
                         success: false,
                         message: result.message,
@@ -72,11 +74,19 @@ let AuthController = class AuthController {
                 return;
             }
             const isProduction = process.env.NODE_ENV === "production";
-            res.cookie("token", result.accessToken, {
+            // Set HTTP Only Access Token Cookie (15m expiry)
+            res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
                 sameSite: "lax",
                 secure: isProduction,
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                maxAge: 15 * 60 * 1000,
+            });
+            // Set HTTP Only Refresh Token Cookie (7 days expiry)
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: isProduction,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
             });
             res.status(201).json({
                 success: true,
@@ -107,11 +117,19 @@ let AuthController = class AuthController {
                 return;
             }
             const isProduction = process.env.NODE_ENV === "production";
-            res.cookie("token", result.accessToken, {
+            // Set HTTP Only Access Token Cookie (15m expiry)
+            res.cookie("accessToken", result.accessToken, {
                 httpOnly: true,
                 sameSite: "lax",
                 secure: isProduction,
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                maxAge: 15 * 60 * 1000,
+            });
+            // Set HTTP Only Refresh Token Cookie (7 days expiry)
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: isProduction,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
             });
             res.status(200).json({
                 success: true,
@@ -125,7 +143,20 @@ let AuthController = class AuthController {
     };
     logout = async (req, res, next) => {
         try {
-            res.clearCookie("token");
+            const refreshToken = req.cookies?.refreshToken;
+            const user = req.user;
+            const userId = user?.id || user?._id;
+            if (userId) {
+                await this.authService.logout(userId.toString());
+            }
+            else if (refreshToken) {
+                const payload = this.jwtService.verifyToken(refreshToken, "refresh");
+                if (payload && payload._id) {
+                    await this.authService.logout(payload._id);
+                }
+            }
+            res.clearCookie("accessToken");
+            res.clearCookie("refreshToken");
             res.status(200).json({
                 success: true,
                 message: "Logged out successfully",
@@ -159,10 +190,55 @@ let AuthController = class AuthController {
             next(error);
         }
     };
+    refreshToken = async (req, res, next) => {
+        try {
+            const refreshToken = req.cookies?.refreshToken;
+            if (!refreshToken) {
+                res.status(401).json({
+                    success: false,
+                    message: "Refresh token missing",
+                });
+                return;
+            }
+            const result = await this.authService.refreshToken(refreshToken);
+            if (!result.success) {
+                res.status(401).json({
+                    success: false,
+                    message: result.message,
+                });
+                return;
+            }
+            const isProduction = process.env.NODE_ENV === "production";
+            // Set HTTP Only Access Token Cookie (15m expiry)
+            res.cookie("accessToken", result.accessToken, {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: isProduction,
+                maxAge: 15 * 60 * 1000,
+            });
+            // Set HTTP Only Refresh Token Cookie (7 days expiry)
+            res.cookie("refreshToken", result.refreshToken, {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: isProduction,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
+            res.status(200).json({
+                success: true,
+                message: result.message,
+                accessToken: result.accessToken,
+            });
+        }
+        catch (error) {
+            next(error);
+        }
+    };
 };
 exports.AuthController = AuthController;
 exports.AuthController = AuthController = __decorate([
     (0, tsyringe_1.injectable)(),
     __param(0, (0, tsyringe_1.inject)(auth_service_1.AuthService)),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __param(1, (0, tsyringe_1.inject)(jwt_auth_service_1.JwtService)),
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        jwt_auth_service_1.JwtService])
 ], AuthController);

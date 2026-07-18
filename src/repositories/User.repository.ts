@@ -21,4 +21,12 @@ export class UserRepository
   async findByPhone(phone: string) {
     return this.model.findOne({ phone });
   }
+
+  async updateRefreshToken(userId: string, refreshToken: string | null) {
+    return this.model.findByIdAndUpdate(
+      userId,
+      { refreshToken },
+      { new: true }
+    );
+  }
 }

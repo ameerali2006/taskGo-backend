@@ -11,6 +11,8 @@ router.post("/signUp", container_1.authController.signUp);
 router.post("/login", container_1.authController.login);
 // Route for logout
 router.post("/logout", container_1.authController.logout);
+// Route for refresh token
+router.post("/refresh-token", container_1.authController.refreshToken);
 // Route for getting current authenticated user profile
 router.get("/me", auth_middleware_1.authMiddleware, container_1.authController.getMe);
 exports.default = router;

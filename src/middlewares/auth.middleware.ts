@@ -5,9 +5,12 @@ import { UserRepository } from "../repositories/User.repository";
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const token = req.cookies?.token;
+    const token = req.cookies?.accessToken;
+    console.log(req.cookies)
+    console.log(token)
 
     if (!token) {
+      console.log("No token provided, authorization denied")
       res.status(401).json({
         success: false,
         message: "No token provided, authorization denied",
@@ -19,9 +22,11 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     const decoded = jwtService.verifyToken(token, "access");
 
     if (!decoded || !decoded._id) {
+      console.log("token expired")
+
       res.status(401).json({
         success: false,
-        message: "Token is invalid or expired",
+        message: "Token expired",
       });
       return;
     }

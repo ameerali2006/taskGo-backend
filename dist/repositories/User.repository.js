@@ -23,6 +23,9 @@ let UserRepository = class UserRepository extends Base_repostiory_1.BaseReposito
     async findByPhone(phone) {
         return this.model.findOne({ phone });
     }
+    async updateRefreshToken(userId, refreshToken) {
+        return this.model.findByIdAndUpdate(userId, { refreshToken }, { new: true });
+    }
 };
 exports.UserRepository = UserRepository;
 exports.UserRepository = UserRepository = __decorate([

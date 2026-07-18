@@ -6,35 +6,21 @@ import { UserRepository } from "../repositories/User.repository";
 import { JwtService } from "../service/jwt-auth.service";
 import { AuthService } from "../service/auth.service";
 
+import { TaskRepository } from "../repositories/Task.repository";
+import { TaskService } from "../service/task.service";
+import { ITaskController } from "../controllers/interface/ITask.controller";
+import { TaskController } from "../controllers/task.controller";
+
 // Register Singletons/Dependencies
 container.registerSingleton(UserRepository);
 container.registerSingleton(JwtService);
 container.registerSingleton(AuthService);
 
-// contoller
-export const authController = container.resolve<IAuthController>(AuthController)
+container.registerSingleton(TaskRepository);
+container.registerSingleton(TaskService);
 
-
-
-// service
-
-
-
-
-
-
-
-
-// repository
-
-
-
-
-
-
-
-
-
-
+// controllers
+export const authController = container.resolve<IAuthController>(AuthController);
+export const taskController = container.resolve<ITaskController>(TaskController);
 
 export { container };

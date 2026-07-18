@@ -21,7 +21,7 @@ const taskSchema = new Schema<ITask>(
 
     description: {
       type: String,
-      required: true,
+      
       trim: true,
     },
 

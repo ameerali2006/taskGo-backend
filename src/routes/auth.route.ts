@@ -14,6 +14,9 @@ router.post("/login", authController.login);
 // Route for logout
 router.post("/logout", authController.logout);
 
+// Route for refresh token
+router.post("/refresh-token", authController.refreshToken);
+
 // Route for getting current authenticated user profile
 router.get("/me", authMiddleware, authController.getMe);
 

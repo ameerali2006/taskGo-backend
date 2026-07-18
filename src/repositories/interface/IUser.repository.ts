@@ -8,4 +8,6 @@ export interface IUserRepository
   findByEmail(email: string): Promise<IUser | null>;
 
   findByPhone(phone: string): Promise<IUser | null>;
+
+  updateRefreshToken(userId: string, refreshToken: string | null): Promise<IUser | null>;
 }  
