@@ -7,6 +7,7 @@ const router = Router();
 // Secure all task routes
 router.use(authMiddleware);
 
+router.get("/analytics", taskController.getAnalytics);
 router.get("/", taskController.getTasks);
 router.post("/", taskController.createTask);
 router.put("/:id", taskController.updateTask);

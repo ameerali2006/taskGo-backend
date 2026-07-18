@@ -128,4 +128,20 @@ export class TaskController implements ITaskController {
       next(error);
     }
   };
+
+  getAnalytics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = (req as any).user;
+      const analytics = await this.taskService.getAnalytics(user._id.toString());
+
+      res.status(200).json({
+        success: true,
+        message: "Task analytics fetched successfully",
+        data: analytics,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
+

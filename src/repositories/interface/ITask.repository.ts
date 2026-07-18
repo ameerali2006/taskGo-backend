@@ -1,6 +1,7 @@
 import { TaskStatus } from "../../config/constants/enums";
 import { ITask } from "../../models/task.model";
 import { IBaseRepository } from "./IBase.repository";
+import { TaskAnalyticsDTO } from "../../dto/task-analytics.dto";
 
 export interface ITaskRepository extends IBaseRepository<ITask> {
   findByUser(userId: string): Promise<ITask[]>;
@@ -13,4 +14,6 @@ export interface ITaskRepository extends IBaseRepository<ITask> {
     pending: number;
     overdue: number;
   }>;
-}
+
+  getAnalytics(userId: string): Promise<TaskAnalyticsDTO>;
+}

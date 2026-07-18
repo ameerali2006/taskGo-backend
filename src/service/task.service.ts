@@ -2,6 +2,7 @@ import { injectable, inject } from "tsyringe";
 import { ITaskService } from "./interface/ITask.service";
 import { TaskRepository } from "../repositories/Task.repository";
 import { ITask } from "../models/task.model";
+import { TaskAnalyticsDTO } from "../dto/task-analytics.dto";
 
 @injectable()
 export class TaskService implements ITaskService {
@@ -39,4 +40,9 @@ export class TaskService implements ITaskService {
     await this.taskRepository.delete(taskId);
     return true;
   }
+
+  async getAnalytics(userId: string): Promise<TaskAnalyticsDTO> {
+    return this.taskRepository.getAnalytics(userId);
+  }
 }
+
