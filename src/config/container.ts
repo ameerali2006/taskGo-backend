@@ -10,16 +10,19 @@ import { TaskRepository } from "../repositories/Task.repository";
 import { TaskService } from "../service/task.service";
 import { ITaskController } from "../controllers/interface/ITask.controller";
 import { TaskController } from "../controllers/task.controller";
+import { SocketServer } from "../socket/socket.server";
 
 // Register Singletons/Dependencies
 container.registerSingleton(UserRepository);
 container.registerSingleton(JwtService);
 container.registerSingleton(AuthService);
 
+container.registerSingleton(SocketServer);
 container.registerSingleton(TaskRepository);
 container.registerSingleton(TaskService);
 
-// controllers
+// singletons / controllers
+export const socketServer = container.resolve(SocketServer);
 export const authController = container.resolve<IAuthController>(AuthController);
 export const taskController = container.resolve<ITaskController>(TaskController);
 
