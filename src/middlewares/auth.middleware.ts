@@ -10,10 +10,9 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     const token = bearerToken || req.cookies?.accessToken;
 
     if (!token) {
-      console.log("No token provided, authorization denied");
       res.status(401).json({
         success: false,
-        message: "No token provided, authorization denied",
+        message: "Token is not provided",
       });
       return;
     }
