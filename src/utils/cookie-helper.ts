@@ -1,46 +1,39 @@
-import { Response } from 'express';
+import { Response, CookieOptions } from 'express';
 
+export const getCookieOptions = (maxAge?: number): CookieOptions => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    ...(maxAge !== undefined && { maxAge }),
+  };
+};
+
+export const setRefreshTokenCookie = (
+  res: Response,
+  refreshToken: string,
+  refreshTokenName: string = 'refreshToken',
+) => {
+  res.cookie(refreshTokenName, refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+};
 
 export const setAuthCookies = (
   res: Response,
-  accessToken: string,
+  _accessToken: string,
   refreshToken: string,
-  accessTokenName: string,
-  refreshTokenName: string,
+  _accessTokenName: string = 'accessToken',
+  refreshTokenName: string = 'refreshToken',
 ) => {
-  const isProduction =process.env.NODE_ENV === 'production';
-
-  res.cookie(accessTokenName, accessToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
-  });
-
-  res.cookie(refreshTokenName, refreshToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
-  });
-};
-
-export const updateCookieWithAccessToken = (
-  res: Response,
-  accessToken: string,
-  accessTokenName: string,
-) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  res.cookie(accessTokenName, accessToken, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
-  });
+  setRefreshTokenCookie(res, refreshToken, refreshTokenName);
 };
 
 export const clearAuthCookies = (
   res: Response,
-  accessTokenName: string,
-  refreshTokenName: string,
+  accessTokenName: string = 'accessToken',
+  refreshTokenName: string = 'refreshToken',
 ) => {
-  res.clearCookie(accessTokenName);
-  res.clearCookie(refreshTokenName);
-};
+  const options = getCookieOptions();
+  res.clearCookie(accessTokenName, options);
+  res.clearCookie(refreshTokenName, options);
+};

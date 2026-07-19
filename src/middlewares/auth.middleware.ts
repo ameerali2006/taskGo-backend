@@ -5,12 +5,12 @@ import { UserRepository } from "../repositories/User.repository";
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const token = req.cookies?.accessToken;
-    console.log(req.cookies)
-    console.log(token)
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    const token = bearerToken || req.cookies?.accessToken;
 
     if (!token) {
-      console.log("No token provided, authorization denied")
+      console.log("No token provided, authorization denied");
       res.status(401).json({
         success: false,
         message: "No token provided, authorization denied",

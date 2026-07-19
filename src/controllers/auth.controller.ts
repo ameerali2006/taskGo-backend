@@ -3,6 +3,7 @@ import { injectable, inject } from "tsyringe";
 import { IAuthController } from "./interface/IAuth.controller";
 import { AuthService } from "../service/auth.service";
 import { JwtService } from "../service/jwt-auth.service";
+import { setRefreshTokenCookie, clearAuthCookies } from "../utils/cookie-helper";
 
 @injectable()
 export class AuthController implements IAuthController {
@@ -70,28 +71,13 @@ export class AuthController implements IAuthController {
         return;
       }
 
-      const isProduction = process.env.NODE_ENV === "production";
-      
-      // Set HTTP Only Access Token Cookie (15m expiry)
-      res.cookie("accessToken", result.accessToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 15 * 60 * 1000,
-      });
-
-      // Set HTTP Only Refresh Token Cookie (7 days expiry)
-      res.cookie("refreshToken", (result as any).refreshToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setRefreshTokenCookie(res, (result as any).refreshToken!);
 
       res.status(201).json({
         success: true,
         message: result.message,
         data: result.data,
+        accessToken: result.accessToken,
       });
     } catch (error) {
       next(error);
@@ -121,28 +107,13 @@ export class AuthController implements IAuthController {
         return;
       }
 
-      const isProduction = process.env.NODE_ENV === "production";
-
-      // Set HTTP Only Access Token Cookie (15m expiry)
-      res.cookie("accessToken", result.accessToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 15 * 60 * 1000,
-      });
-
-      // Set HTTP Only Refresh Token Cookie (7 days expiry)
-      res.cookie("refreshToken", (result as any).refreshToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setRefreshTokenCookie(res, (result as any).refreshToken!);
 
       res.status(200).json({
         success: true,
         message: result.message,
         data: result.data,
+        accessToken: result.accessToken,
       });
     } catch (error) {
       next(error);
@@ -164,8 +135,7 @@ export class AuthController implements IAuthController {
         }
       }
 
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      clearAuthCookies(res);
 
       res.status(200).json({
         success: true,
@@ -213,31 +183,15 @@ export class AuthController implements IAuthController {
       }
 
       const result = await this.authService.refreshToken(refreshToken);
-      if (!result.success) {
+      if (!result.success || !result.accessToken || !result.refreshToken) {
         res.status(401).json({
           success: false,
-          message: result.message,
+          message: result.message || "Failed to refresh token",
         });
         return;
       }
 
-      const isProduction = process.env.NODE_ENV === "production";
-
-      // Set HTTP Only Access Token Cookie (15m expiry)
-      res.cookie("accessToken", result.accessToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 15 * 60 * 1000,
-      });
-
-      // Set HTTP Only Refresh Token Cookie (7 days expiry)
-      res.cookie("refreshToken", result.refreshToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setRefreshTokenCookie(res, result.refreshToken);
 
       res.status(200).json({
         success: true,
