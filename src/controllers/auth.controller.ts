@@ -18,11 +18,11 @@ export class AuthController implements IAuthController {
     try {
       const { name, email, phone, password } = req.body;
 
-      // Validate inputs
-      if (!name || typeof name !== "string" || name.trim().length < 3 || name.trim().length > 50) {
+      const nameRegex = /^[a-zA-Z]+(?: [a-zA-Z]+)*$/;
+      if (!name || typeof name !== "string" || name.length < 3 || name.length > 50 || !nameRegex.test(name)) {
         res.status(400).json({
           success: false,
-          message: "Name must be between 3 and 50 characters",
+          message: "Name can contain only letters and single spaces between words.",
         });
         return;
       }

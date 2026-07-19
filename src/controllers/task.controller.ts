@@ -39,8 +39,13 @@ export class TaskController implements ITaskController {
       const user = (req as any).user;
       const { title, description, priority, status, dueDate } = req.body;
 
-      if (!title) {
-        res.status(400).json({ success: false, message: "Task title is required" });
+      const trimmedTitle = typeof title === "string" ? title.trim() : "";
+      if (!trimmedTitle || trimmedTitle.length < 3 || trimmedTitle.length > 100) {
+        res.status(400).json({ success: false, message: "Task title must be between 3 and 100 characters" });
+        return;
+      }
+      if (!/[a-zA-Z]/.test(trimmedTitle)) {
+        res.status(400).json({ success: false, message: "Task title must contain at least one letter" });
         return;
       }
       if (!dueDate) {
@@ -49,7 +54,7 @@ export class TaskController implements ITaskController {
       }
 
       const task = await this.taskService.createTask(user._id.toString(), {
-        title,
+        title: trimmedTitle,
         description: description || "",
         priority: priority || "Medium",
         status: status || "Todo",
@@ -80,7 +85,18 @@ export class TaskController implements ITaskController {
       const { title, description, priority, status, dueDate } = req.body;
 
       const updateData: any = {};
-      if (title !== undefined) updateData.title = title;
+      if (title !== undefined) {
+        const trimmedTitle = typeof title === "string" ? title.trim() : "";
+        if (!trimmedTitle || trimmedTitle.length < 3 || trimmedTitle.length > 100) {
+          res.status(400).json({ success: false, message: "Task title must be between 3 and 100 characters" });
+          return;
+        }
+        if (!/[a-zA-Z]/.test(trimmedTitle)) {
+          res.status(400).json({ success: false, message: "Task title must contain at least one letter" });
+          return;
+        }
+        updateData.title = trimmedTitle;
+      }
       if (description !== undefined) updateData.description = description;
       if (priority !== undefined) updateData.priority = priority;
       if (status !== undefined) updateData.status = status;
